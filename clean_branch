@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+ruby -e "$(
+cat <<EOF
+# This script is used to only keep files necessary for the Rails gemspec.
+spec = Gem::Specification.load('rails.gemspec')
+puts spec.files
+puts "clean_branch"
+puts "RAILS_VERSION"
+puts "rails.gemspec"
+puts ".gitignore"
+EOF
+)" > files-to-keep.txt
+
+
+cat files-to-keep.txt
+
+comm -23 \
+  <(find . \( -type f -o -type l \) ! -path './.*/*' ! -name './.gitignore' | sed 's|^\./||' | sort) \
+  <(sort files-to-keep.txt) | \
+xargs rm -f
+
+# Delete all empty directories except hidden ones
+while find . -type d -empty ! -path './.*' -delete | grep .; do :; done
